@@ -1,0 +1,12 @@
+#miscContainer{
+    width: 400px;
+    color: whitesmoke;
+    position: relative;
+    bottom: 912px;
+    left: 570px;
+    display: flex;
+    font-size: 20px;
+    display: flex;
+    justify-content: space-evenly;
+    font-weight: 500;
+}

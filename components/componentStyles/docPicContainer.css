@@ -1,0 +1,12 @@
+#docPicContainer{
+    position: relative;
+    width: 290px;
+    height: 600px;
+    right: 290px;
+    bottom: 300px;
+    border-radius: 20px;
+}
+img{
+    height: 430px;
+    border-radius: 18px;
+}

@@ -1,0 +1,11 @@
+#mainText2{
+    position: relative;
+    bottom:770px;
+    left: 470px;
+    width: 580px;
+    font-size: 20px;
+    color: whitesmoke;
+    font-weight: 500;
+    display: flex;
+    text-align: center;
+}

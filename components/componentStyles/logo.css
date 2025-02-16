@@ -1,0 +1,7 @@
+#logo-img{
+    height:100px;
+    width: 100px;
+    position: relative;
+    bottom: 860px;
+    transform: rotate(-40deg);
+}

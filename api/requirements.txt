@@ -1,0 +1,7 @@
+pydantic
+fastapi[standard]
+langchain-core
+langchain-community
+langchain-chroma
+langchain-ollama
+langchain-groq

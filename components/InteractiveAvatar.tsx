@@ -28,7 +28,7 @@ const InteractiveAvatar = forwardRef((props, ref) => {
 
     try {
       await avatar.current.createStartAvatar({
-        quality: AvatarQuality.Low,
+        quality: AvatarQuality.High,
         avatarName: avatarId,
         voice: {
           rate: 1.2,
@@ -38,7 +38,6 @@ const InteractiveAvatar = forwardRef((props, ref) => {
         disableIdleTimeout: true,
       });
 
-      await avatar.current.startVoiceChat({ useSilencePrompt: false });
     } catch (error) {
       console.error("Error starting avatar session:", error);
     } finally {
@@ -53,7 +52,7 @@ const InteractiveAvatar = forwardRef((props, ref) => {
     }
     setIsLoadingRepeat(true);
     await avatar.current
-      .speak({ text, taskType: TaskType.REPEAT, taskMode: TaskMode.SYNC })
+      .speak({ text, taskType: TaskType.REPEAT, })
       .catch((e) => console.error("Error speaking text:", e.message));
     setIsLoadingRepeat(false);
   }
@@ -76,7 +75,7 @@ const InteractiveAvatar = forwardRef((props, ref) => {
   }, []);
 
   return (
-    <div>
+    <div id="avatarContainer">
       {stream ? (
         <video
           autoPlay

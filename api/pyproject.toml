@@ -1,14 +1,16 @@
 [project]
 name = "sanjeevani-api"
 version = "0.1.0"
-description = "Add your description here"
+description = "rest-api for sanjeevani"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "beautifulsoup4>=4.13.3",
     "fastapi[standard]>=0.115.8",
     "langchain-chroma>=0.2.2",
     "langchain-community>=0.3.17",
     "langchain-core>=0.3.35",
+    "langchain-google-genai>=2.0.9",
     "langchain-groq>=0.2.4",
     "langchain-ollama>=0.2.3",
     "pydantic>=2.10.6",

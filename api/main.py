@@ -11,7 +11,7 @@ from utils import image_analysis
 from utils import web_search
 
 app = FastAPI()
-origins = ["http://127.0.0.1:8001"]
+origins = ["http://127.0.0.1:8001", "http://127.0.0.1:3000"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

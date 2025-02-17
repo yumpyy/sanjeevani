@@ -1,27 +1,45 @@
-"use client";
-
-import { useState, useRef } from "react";
+"use client"
+import { useEffect, useState, useRef } from "react";
 import InteractiveAvatar from "@/components/InteractiveAvatar";
-import Bg_video from "@/components/background-vid";
+>>>>>>> a7ca718 (feat(ui): add avatar real-time interaction)
 
 const BASE_URL = "http://127.0.0.1:8000";
 
 export default function Chatbot() {
-  const avatarRef = useRef(null);
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
-  const [sessionId, setSessionId] = useState(null);
-  const [isComplete, setIsComplete] = useState(false);
-  const [age, setAge] = useState(null);
-  const [sex, setSex] = useState(null);
-  const [step, setStep] = useState(0);
-  const [imageData, setImageData] = useState("");
+  const avatarRef = useRef<any>(null); // Use `any` since we're using a ref to the avatar component
+  const [messages, setMessages] = useState<{ sender: string; text: string }[]>([]);
+  const [input, setInput] = useState<string>("");
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isComplete, setIsComplete] = useState<boolean>(false);
+  const [age, setAge] = useState<number | null>(null);
+  const [sex, setSex] = useState<string | null>(null);
+  const [step, setStep] = useState<number>(0);
+  const [imageData, setImageData] = useState<string>("");
 
-  const sendMessage = async (message) => {
+  // Start avatar session as soon as page is loaded
+  useEffect(() => {
+    const startAvatarSession = async () => {
+      if (avatarRef.current) {
+        // Starting the avatar session with appropriate avatar id and language
+        await avatarRef.current.startSession("Ann_Doctor_Standing2_public", "en-US");
+      }
+    };
+
+    startAvatarSession();
+
+    return () => {
+      if (avatarRef.current) {
+        avatarRef.current.endSession();
+      }
+    };
+  }, []); // Empty dependency array ensures it runs only once on mount
+
+  const sendMessage = async (message: string) => {
     setMessages((prev) => [...prev, { sender: "user", text: message }]);
+
     if (!sessionId) {
       // First request with age, sex, and symptoms
-      const payload = { age, sex, symptoms: message, image_data: imageData };
+      const payload = { age: parseInt(age as string, 10), sex, symptoms: message, image_data: imageData };
       const res = await fetch(`${BASE_URL}/diagnosis/physician/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -43,18 +61,47 @@ export default function Chatbot() {
     }
   };
 
-  const processResponse = async (data) => {
+  const processResponse = async (data: any) => {
+    if (!avatarRef.current) {
+      console.error("Avatar session not started.");
+      return;
+    }
+
+    const messagesToAdd = [];
+
     if (data.diagnosis_complete) {
       const res = await fetch(`${BASE_URL}/diagnosis/${sessionId}/recommendation`);
       const recommendation = await res.json();
-      setMessages((prev) => [...prev, { sender: "bot", text: recommendation.recommendation }]);
+
+      messagesToAdd.push(
+        { sender: "bot", text: `Diagnosis: ${recommendation.diagnosis}` },
+        { sender: "bot", text: `Recommended Medicines: ${recommendation.recommend_medicines.join(", ")}` },
+        { sender: "bot", text: `Dosage: ${recommendation.dosage}` },
+        { sender: "bot", text: `Side Effects: ${recommendation.potential_side_effects.join(", ")}` },
+        { sender: "bot", text: `Contraindications: ${recommendation.contraindications.join(", ")}` },
+        { sender: "bot", text: `Alternative Treatments: ${recommendation.alternative_treatments.join(", ")}` },
+        { sender: "bot", text: `Emergency Aid: ${recommendation.emergency_aid || "Not provided"}` },
+        { sender: "bot", text: `Consultation Required: ${recommendation.consultation_required ? "Yes" : "No"}` },
+      );
+
       setIsComplete(true);
     } else {
-      setMessages((prev) => [...prev, { sender: "bot", text: data.response }]);
+      messagesToAdd.push({ sender: "bot", text: data.response });
     }
+
+    setMessages((prev) => [...prev, ...messagesToAdd]);
   };
 
-  const handleSubmit = (e) => {
+  // This useEffect will trigger every time a new message is added to the messages state
+  useEffect(() => {
+    // Speak the latest bot message (if it's not empty and is from the bot)
+    const latestMessage = messages[messages.length - 1];
+    if (latestMessage?.sender === "bot" && avatarRef.current) {
+      avatarRef.current.speakText(latestMessage.text);
+    }
+  }, [messages]); // Trigger the effect whenever the messages array changes
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim()) {
       sendMessage(input);
@@ -62,10 +109,10 @@ export default function Chatbot() {
     }
   };
 
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     const reader = new FileReader();
-    reader.onloadend = () => setImageData(reader.result.split(",")[1]);
+    reader.onloadend = () => setImageData(reader.result?.toString().split(",")[1] || "");
     if (file) reader.readAsDataURL(file);
   };
 
@@ -73,7 +120,6 @@ export default function Chatbot() {
     <div className="flex h-screen">
       {/* Avatar Section */}
       <div className="w-3/4 relative">
-        <Bg_video />
         <InteractiveAvatar ref={avatarRef} />
       </div>
 
@@ -91,13 +137,14 @@ export default function Chatbot() {
         {!sessionId && step === 0 && (
           <div className="flex flex-col space-y-2">
             <label>Age:</label>
-            <select onChange={(e) => setAge(parseInt(e.target.value))}>
+            <select onChange={(e) => setAge(parseInt(e.target.value, 10))} defaultValue="">
               {[...Array(100).keys()].map((n) => (
                 <option key={n} value={n}>{n}</option>
               ))}
             </select>
             <label>Sex:</label>
-            <select onChange={(e) => setSex(e.target.value)}>
+            <select onChange={(e) => setSex(e.target.value)} defaultValue="">
+              <option value="" disabled>Select your sex</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
             </select>

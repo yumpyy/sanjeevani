@@ -25,38 +25,42 @@ class MedicalConsultation(BaseModel):
         default="",
         description="Explanation for why questioning has stopped, such as 'All key details covered' or 'Possible emergency detected'."
     )
+class DosageDetails(BaseModel):
+    """
+    model for defining detailed dosage and administration instructions for each medication.
+    """
+    medicine_name: str = Field(description="Name of the prescribed medicine")
+    strength: Optional[str] = Field(default=None, description="Strength of the medication (e.g., 500 mg, 10 mL)")
+    frequency: str = Field(description="How often the medication should be taken (e.g., twice daily)")
+    duration: str = Field(description="Total duration of the treatment (e.g., 7 days)")
+    special_instructions: Optional[str] = Field(default=None, description="Any specific instructions such as 'take with food'")
 
-class MedicinePrescription(BaseModel):    
+class MedicinePrescription(BaseModel):
     """
     model for generating a structured medical prescription, including diagnosis,
-    recommended medicines, dosage, side effects, and contraindications.
+    recommended medicines, detailed dosage, side effects, and contraindications.
     """
-
     diagnosis: Optional[str] = Field(
         default=None,
         description="Possible medical condition(s) based on symptoms and available data, including visual medical analysis if provided"
     )
-    recommend_medicines: list[str] = Field(
-        description="List of recommended medicines based on symptoms and patient details"
+    medications: list[DosageDetails] = Field(
+        description="List of prescribed medicines with dosage details"
     )
-    dosage: Optional[str] = Field(
-        default=[],
-        description="Precise dosage and administration guidelines, including frequency and special instructions"
-    )
-    potential_side_effects: list[str] = Field(
-        description="List of possible side effects, including common and severe reactions"
+    side_effects: list[str] = Field(
+        default=[], description="List of side effects that may occur"
     )
     contraindications: list[str] = Field(
-        description="Conditions, medications, or allergies that may interact negatively with the recommended treatment"
+        description="Conditions, medications, or allergies that may interact negatively with the prescribed treatment"
     )
     alternative_treatments: list[str] = Field(
         description="Non-pharmaceutical or supportive treatments, such as lifestyle changes or dietary adjustments"
     )
-    emergency_aid: Optional[str] = Field(
-        default=None, description="First aid or emergency steps if the symptoms indicate a potentially life-threatening condition"
+    emergency_aid_steps: Optional[list[str]] = Field(
+        default=None, description="Step-by-step emergency actions if the symptoms indicate a severe reaction"
     )
     consultation_required: bool = Field(
-        default=False, description="True if professional medical consultation is necessary before taking any recommended medication"
+        default=False, description="True if professional medical consultation is necessary"
     )
 
 class ExtractedSymptoms(BaseModel):
@@ -71,6 +75,44 @@ class SummarizedDocs(BaseModel):
     summary: str = Field(
         description="Summary for document"
     )
+
+class SOAPNote(BaseModel):
+    """
+    Model for generating a structured SOAP note based on patient input,
+    clinical observations, visual medical analysis (if applicable),
+    and structured prescriptions.
+    """
+    patient_age: int = Field(description="Patient's age in years")
+    patient_sex: str = Field(description="Patient's sex (Male/Female/Other)")
+    
+    # Subjective
+    chief_complaint: str = Field(description="Primary reason for the visit, as reported by the patient")
+    history_of_present_illness: str = Field(description="Detailed description of the chief complaint using OLDCARTS method")
+    past_medical_history: Optional[str] = Field(default=None, description="Pertinent past medical conditions")
+    surgical_history: Optional[str] = Field(default=None, description="Past surgical procedures")
+    family_history: Optional[str] = Field(default=None, description="Relevant family medical history")
+    social_history: Optional[str] = Field(default=None, description="Patient's lifestyle, including smoking, alcohol, occupation, etc.")
+    review_of_systems: Optional[str] = Field(default=None, description="System-based symptom checklist")
+
+    # Objective
+    vital_signs: Optional[str] = Field(default=None, description="Documented vital signs including BP, HR, Temp, RR")
+    physical_exam: Optional[str] = Field(default=None, description="Findings from the clinician's physical examination")
+    lab_results: Optional[str] = Field(default=None, description="Relevant laboratory test results")
+    imaging_results: Optional[str] = Field(default=None, description="Findings from X-ray, MRI, CT scans, or ultrasound")
+    visual_medical_analysis: Optional[str] = Field(default=None, description="Findings from image analysis (if applicable)")
+
+    # Assessment
+    primary_diagnosis: str = Field(description="Most likely diagnosis based on subjective and objective findings")
+    differential_diagnosis: list[str] = Field(description="List of alternative possible diagnoses")
+    reasoning: Optional[str] = Field(default=None, description="Justification for primary and differential diagnoses")
+
+    # Plan
+    prescription: MedicinePrescription
+    additional_tests: Optional[list[str]] = Field(default=[], description="Any further diagnostic tests recommended")
+    specialist_referral: Optional[list[str]] = Field(default=[], description="Recommended specialist consultations")
+    patient_education: Optional[str] = Field(default=None, description="Guidance provided to the patient about their condition and treatment")
+    follow_up_plan: Optional[str] = Field(default=None, description="Instructions for future visits or check-ups")
+
 
 class Physician:
     def __init__(self) -> None:
@@ -245,50 +287,72 @@ class Physician:
 
         prescription_prompt = ChatPromptTemplate.from_template(
         """
-         **Role & Responsibility**  
-        You are a **professional medical assistant** responsible for generating **safe, precise, and well-informed medical assessments, prescriptions, and emergency guidance** based on patient data, medical documentation, and visual medical analysis.  
+        **Role & Responsibility**  
+            You are a **professional medical assistant** responsible for generating **safe, structured, and evidence-based medical assessments, prescriptions, and emergency guidance** based on patient data, standardized medical guidelines, and visual medical analysis (if available).  
         
-         **Patient Information**  
-        - **Patient Medical Details:** {patient_details}  
-        - **Relevant Medical Documentation & Guidelines:** {medical_docs}  
-        - **Visual Medical Analysis (If Available):** {visual_medical_analysis} _(Description of medical images or scans related to the patient’s condition, may be empty)_  
+        **Patient Information**  
+            - **Patient Medical Details:** {patient_details}  
+            - **Relevant Medical Documentation & Guidelines:** {medical_docs}  
+            - **Visual Medical Analysis (If Available):** {visual_medical_analysis} _(Description of medical images or scans related to the patient’s condition, may be empty)_  
         
-         **Your Objective**  
-        Using the patient's **symptoms, medical history, medical guidelines, and visual medical analysis**, provide a **structured and medically sound response** that includes:  
+        **Your Objective**  
+            Using the **patient’s symptoms, medical history, medical guidelines, and visual medical analysis**, generate a structured and **medically accurate response** that strictly adheres to **evidence-based practices** and does NOT recommend **hallucinated, non-standard, or unsafe treatments**.  
         
-         **1. Preliminary Diagnosis (If Possible & Safe)**  
-           - If symptoms and available data **strongly indicate a condition**, provide a **preliminary assessment**.  
-           - If a **visual medical analysis** is available, use it to **support or refine** the diagnosis.  
-           - **DO NOT assume a definitive diagnosis**—present possible conditions with reasoning.  
+            Your response **MUST follow** the structure below:  
         
-         **2. Recommended Medications**  
-           - Provide **only the names** of the medications based on medical references.  
-           - DO NOT include dosage or administration instructions in this section.  
+        **1. Preliminary Diagnosis (If Supported by Evidence)**  
+            - Provide a **possible condition(s) based on available medical data**, but **DO NOT assume a definitive diagnosis**.  
+            - If a **visual medical analysis** is available, use it to **support or refine** the diagnosis.  
+            - Clearly state if **further tests or specialist evaluation** are required.  
         
-         **3. Dosage & Administration Guidelines**  
-           - Provide **precise dosage instructions**, including frequency, duration, and special considerations (e.g., "Take with food," "Avoid alcohol").  
+        **2. Recommended Medications (STRICTLY EVIDENCE-BASED)**  
+            - **Only recommend medications that are widely recognized in medical guidelines** for the suspected condition.  
+            - DO NOT generate **random or hallucinated medication names**.  
+            - If a condition does not have a clear pharmacological treatment, state **"No medication recommendation based on current medical guidelines."**  
         
-         **4. Potential Side Effects & Risks**  
-           - List **common and severe** side effects that the patient should be aware of.  
+        **3. Dosage & Administration Guidelines**  
+            For each **recommended medication**, provide:  
+            - **Precise dosage and strength** (e.g., “500 mg,” “10 mL”).  
+            - **Route of administration** (e.g., oral, IV, topical).  
+            - **Frequency & duration** (e.g., “Take twice daily for 7 days”).  
+            - **Special instructions**, if applicable (e.g., “Take with food,” “Avoid alcohol”).  
         
-         **5. Contraindications & Drug Interactions**  
-           - Highlight **potential conflicts** with existing medical conditions, medications, or allergies.  
+        **4. Potential Side Effects & Risks**  
+            - **Common side effects** (e.g., nausea, dizziness, headache).  
+            - **Severe or rare adverse effects** (e.g., risk of liver damage, anaphylaxis).  
+            - **Clearly state when medical attention is required** for certain side effects.  
         
-         **6. Alternative Treatments (If Applicable)**  
-           - Suggest **non-pharmaceutical treatments** like lifestyle modifications, physiotherapy, or dietary changes.  
+        **5. Contraindications & Drug Interactions**  
+            - **Pre-existing conditions** that may conflict with the prescribed medication (e.g., “Not recommended for patients with liver disease”).  
+            - **Known drug interactions** (e.g., “Avoid if taking blood thinners”).  
+            - **Allergy considerations** (e.g., “Do not prescribe if allergic to penicillin”).  
         
-         **7. Emergency Aid & First Response**  
-           - If symptoms suggest an **urgent medical condition**, provide **first aid or emergency response steps** (e.g., “Lie down and elevate legs if feeling faint,” “Use an epinephrine injection for severe allergic reactions”).  
-           - Clearly state if **immediate professional medical intervention** is required.  
+        **6. Alternative Treatments (If Applicable)**  
+            - **Non-pharmaceutical interventions** such as dietary adjustments, physical therapy, lifestyle changes, or home remedies supported by medical guidelines.  
+            - **Clearly indicate if alternative treatments alone are insufficient** for managing the condition.  
         
-         **8. Consultation Recommendation**  
-           - Indicate whether a **professional medical consultation is necessary** before taking the recommended medications.  
+        **7. Emergency Aid & First Response (IF URGENT SYMPTOMS DETECTED)**  
+            - **Provide first aid or emergency response steps** if symptoms indicate a potential medical emergency.  
+            - **For critical cases, explicitly state:** “Seek immediate emergency medical care—self-treatment is NOT recommended.”  
         
-         **Critical Safety Guidelines**  
-        - **DO NOT assume a final diagnosis**—only suggest possible conditions based on evidence.  
-        - **ALWAYS emphasize** the importance of consulting a licensed medical professional before starting medication.  
-        - **If symptoms suggest a medical emergency**, prioritize first aid recommendations and urge **immediate medical attention** instead of self-medication.  
-        - **Ensure compliance** with standard medical guidelines and DO NOT recommend off-label or experimental treatments unless explicitly supported by medical references.
+        **8. Consultation Recommendation**  
+            - Clearly state whether the patient **must consult a doctor before taking any prescribed medications**.  
+            - If a **physical examination, lab test, or specialist referral** is required, provide justification.  
+        
+        **Critical Safety Guidelines (STRICTLY FOLLOWED)**  
+            ✔ **DO NOT assume a final diagnosis.** Provide **differential diagnoses** only if evidence supports them.  
+            ✔ **DO NOT recommend hallucinated or random medications.** Medications **MUST** be sourced from recognized medical guidelines.  
+            ✔ **ALWAYS emphasize** consulting a licensed medical professional before starting medication.  
+            ✔ **If symptoms suggest an emergency, prioritize immediate medical intervention over self-medication.**  
+            ✔ **Ensure compliance with medical standards.** Off-label or experimental treatments **MUST NOT** be recommended unless explicitly supported by medical references.  
+        
+        **Failure Criteria (Trigger Safeguards If Any Apply)**  
+            If any of the following apply, state **"Unable to provide a safe recommendation—consult a licensed medical professional."**  
+            1. **Symptoms are vague, unclear, or insufficient for a safe diagnosis.**  
+            2. **No medication is recognized in standard medical guidelines for the condition.**  
+            3. **Potential medication risks outweigh benefits.**  
+            4. **Patient history suggests high-risk contraindications.**  
+            5. **A medical emergency requires urgent professional intervention.**  
         """
         )
 
@@ -301,3 +365,116 @@ class Physician:
             }
         )
         return response
+    
+    def medical_prescription_summary(
+        self,
+        prescription_data: MedicalConsultation
+    ):
+        """converts structured medical prescription data into a doctor-style, human-readable summary."""
+
+        prompt = ChatPromptTemplate.from_template(
+        """
+        **Prompt for Human-Readable Doctor’s Summary of Medical Prescription**  
+
+        **Role & Objective:**  
+        You are a **highly experienced medical professional** responsible for communicating **precise, structured, and medically sound** treatment plans to patients in a **clear yet professional manner**. Your task is to generate a **concise, human-readable summary** of a medical prescription while maintaining a **doctor’s authoritative and confident tone**.  
+        
+        **Context:**
+        {prescription_data}
+        
+        **Output Requirements:**  
+        Your response should:  
+        ✔ **Use a professional doctor’s tone**—precise, confident, and medically authoritative.  
+        ✔ **Naturally integrate** all prescription details into a structured yet conversational format.  
+        ✔ **Emphasize critical information**, such as dosage instructions, precautions, and follow-up needs.  
+        ✔ **Avoid technical jargon** unless necessary—prioritize **patient comprehension**.  
+        ✔ **Sound natural and realistic**, as if spoken by a doctor during a consultation.  
+        
+        **Example Structure of the Response:**  
+        
+        - *"Based on your symptoms and medical history, I am prescribing **[Medication Name]**, to be taken at **[Dosage]**, **[Frequency]**, for **[Duration]**. This will help manage **[Condition/Symptom]** effectively. Ensure that you **[Special Instructions: e.g., take with food, avoid alcohol]** to maximize effectiveness and minimize risks.  
+        - While this medication is generally well-tolerated, you may experience **[Common Side Effects]**. However, if you notice **[Severe Side Effects]**, seek medical attention immediately. Additionally, due to **[Contraindication or Drug Interaction]**, avoid **[Specific Medications, Foods, Activities]**.  
+        - Alongside this, I recommend **[Non-Pharmaceutical Advice: e.g., dietary changes, hydration, physiotherapy]** to support your recovery. If symptoms persist or worsen, schedule a follow-up consultation. Otherwise, adhere to this plan carefully, and you should see improvement soon."*  
+
+        **Critical Guidelines for the LLM:**  
+        - **DO NOT introduce any new medications or details not in the given prescription.**  
+        - **DO NOT make definitive guarantees about recovery—use medical reasoning instead.**  
+        - **DO NOT use casual or overly empathetic language—maintain a clinical, professional approach.**  
+        - **DO NOT omit safety warnings, potential side effects, or contraindications.**  
+        """
+        )
+
+        med_summary_chain = prompt | self.groq
+        response = med_summary_chain.invoke({"prescription_data": prescription_data})
+        return response.content
+
+    def generate_soap_note(
+        self,
+        patient_details,
+        visual_medical_analysis,
+        prescription_data
+    ):
+        prompt = ChatPromptTemplate.from_template(
+        """
+        **Role & Responsibility**  
+        You are a **professional medical assistant** responsible for generating **safe, structured, and medically accurate SOAP notes** based on patient data, medical documentation, visual medical analysis, and any related prescription information.  
+        
+        **Patient Information**  
+        - **Patient Medical Details:** {patient_details}  
+        - **Visual Medical Analysis (If Available):** {visual_medical_analysis} _(Description of medical images or scans related to the patient’s condition, may be empty)_  
+        - **Prescription Data:** {prescription_data} _(Structured medical prescription including diagnosis, recommended medications, dosage, side effects, contraindications, etc.)_
+        
+        **Your Objective**  
+        Using the patient’s **symptoms, medical history, medical guidelines, visual medical analysis**, and the **prescription data**, generate a **structured SOAP note** with the following sections:
+        
+        #**1. Subjective (S) - Patient’s Reported Information**  
+           - **Chief Complaint (CC):** Short statement of the primary symptom or condition.  
+           - **History of Present Illness (HPI):** Detailed description of the CC, structured using the **OLDCARTS** framework:  
+             - **Onset:** When did it start?  
+             - **Location:** Where is the issue?  
+             - **Duration:** How long has it persisted?  
+             - **Characterization:** How does the patient describe it?  
+             - **Alleviating & Aggravating Factors:** What makes it better or worse?  
+             - **Radiation:** Does it spread anywhere?  
+             - **Temporal Factors:** Is it worse at specific times?  
+             - **Severity:** Pain or symptom severity scale (e.g., 1-10).  
+           - **Past Medical History:** Previous diagnoses, conditions, and surgeries.  
+           - **Family & Social History:** Relevant hereditary conditions and lifestyle factors.  
+           - **Review of Systems (ROS):** Checklist of symptoms related to different organ systems.  
+        
+        #**2. Objective (O) - Clinical & Diagnostic Findings**  
+           - **Vital Signs:** Temperature, heart rate, blood pressure, respiratory rate.  
+           - **Physical Exam Findings:** Notable observations from a physical examination.  
+           - **Diagnostic Data:** Laboratory results, imaging findings, and other diagnostic reports.  
+        
+        #**3. Assessment (A) - Diagnosis & Clinical Analysis**  
+           - **Problem List:** List the issues based on the subjective and objective information.  
+           - **Preliminary Diagnosis:** If symptoms strongly suggest a specific condition, include possible diagnoses, but refrain from definitive conclusions.  
+           - **Differential Diagnosis:** Additional potential diagnoses that need to be ruled out, including reasoning.  
+        
+        #**4. Plan (P) - Treatment & Recommendations**  
+           - **Medications:** Based on the prescription data, list the **recommended medications** with emphasis on dosage and administration guidelines.  
+           - **Side Effects & Risks:** Include any potential side effects as per the prescription data.  
+           - **Contraindications & Interactions:** List any contraindications or interactions with other medications, conditions, or allergies as noted in the prescription data.  
+           - **Alternative Treatments:** Suggest non-pharmaceutical approaches if applicable.  
+           - **Specialist Referrals & Additional Tests:** Specify any consultations or additional tests required.  
+           - **Emergency Response:** Include any emergency steps if the condition is life-threatening or urgent.  
+           - **Consultation Requirement:** Indicate if professional consultation is recommended before following the plan.
+        
+        **Critical Notes**  
+        - Ensure the **prescription data** is accurately integrated into the treatment and recommendations sections.  
+        - Maintain a **professional tone** throughout, ensuring clarity and accuracy in each section.  
+        - Emphasize that **this is a preliminary assessment**, and professional consultation is essential for final diagnosis and treatment decisions.  
+        """
+        )
+
+        soap_note_chain = prompt | self.groq
+        response = soap_note_chain.invoke(
+            {
+                "patient_details": patient_details,
+                "visual_medical_analysis": visual_medical_analysis,
+                "prescription_data": prescription_data
+            }
+        )
+
+        return response.content

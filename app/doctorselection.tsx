@@ -34,6 +34,7 @@ const doctors = [
     rating: 4.7,
     reviewCount: 315,
   },
+]
 
 const DoctorSelection = ({ isOpen, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(0);

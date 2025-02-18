@@ -46,6 +46,7 @@ class DiagnosisSession:
         self.visual_medical_analysis = ""
         self.conversation_history = {}
         self.recommendation = ""
+        self.soap_note = ""
 
 @app.get("/doctors/")
 async def get_doctors():
@@ -95,11 +96,14 @@ async def start_diagnosis(doctor_id: str, patient_details: PatientDetails):
             medical_docs = [web_search.retrieve_documents(symptom) for symptom in extracted_symptoms]
             summarized_docs = doctor.summarize_docs(medical_docs)
 
-            session.recommendation = doctor.generate_prescription(patient_details.model_dump(), summarized_docs, visual_medical_analysis)
+            prescription_data = doctor.generate_prescription(patient_details.model_dump(), summarized_docs, visual_medical_analysis)
+            session.recommendation = doctor.medical_prescription_summary(prescription_data)
+            session.soap_note = doctor.generate_soap_note(patient_details.model_dump(), summarized_docs, visual_medical_analysis)
         return {
             "session_id": session.session_id,
             "diagnosis_complete": True,
             "recommendation": session.recommendation,
+            "soap_note": session.soap_note
         }
 
 
@@ -148,7 +152,9 @@ async def continue_diagnosis(
         session.completed = True
 
         if isinstance(doctor, Physician):
-            session.recommendation = doctor.generate_prescription(session.patient_details.model_dump(), session.summarized_docs, session.visual_medical_analysis)
+            prescription_data = doctor.generate_prescription(session.patient_details.model_dump(), session.summarized_docs, session.visual_medical_analysis)
+            session.recommendation = doctor.medical_prescription_summary(prescription_data)
+            session.soap_note = doctor.generate_soap_note(session.patient_details, session.summarized_docs, session.visual_medical_analysis)
         else:
             session.recommendation = doctor.provide_recommendations(
                 session.patient_details.model_dump()
@@ -186,4 +192,8 @@ async def get_recommendation(session_id: str):
     if not session.completed:
         raise HTTPException(status_code=400, detail="Diagnosis not complete")
 
-    return {"recommendation": session.recommendation}
+    print(session.recommendation)
+    return {
+        "recommendation": session.recommendation,
+        "soap_note": session.soap_note
+    }

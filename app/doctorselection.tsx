@@ -1,6 +1,5 @@
 "use client";
 
-
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -34,21 +33,21 @@ const doctors = [
     rating: 4.7,
     reviewCount: 315,
   },
-]
+];
 
 const DoctorSelection = ({ isOpen, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loadedImages, setLoadedImages] = useState(new Set());
   const router = useRouter();
-  
+
   // Refs for swipe detection
   const touchStartX = useRef(null);
   const touchEndX = useRef(null);
-  
+
   // Update image loading status
   useEffect(() => {
     if (!isOpen) return;
-    
+
     // Preload doctor images
     doctors.forEach((doctor) => {
       const img = new window.Image();
@@ -61,15 +60,15 @@ const DoctorSelection = ({ isOpen, onClose }) => {
         });
       };
     });
-    
+
     // Reset selection when opened
     setCurrentIndex(0);
   }, [isOpen]);
-  
+
   // Handle keyboard navigation
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const handleKeydown = (e) => {
       switch (e.key) {
         case "ArrowLeft":
@@ -88,7 +87,7 @@ const DoctorSelection = ({ isOpen, onClose }) => {
           break;
       }
     };
-    
+
     window.addEventListener("keydown", handleKeydown);
     return () => window.removeEventListener("keydown", handleKeydown);
   }, [isOpen, currentIndex, onClose]);
@@ -107,22 +106,22 @@ const DoctorSelection = ({ isOpen, onClose }) => {
       return prevDoctorIndex < 0 ? doctors.length - 1 : prevDoctorIndex;
     });
   };
-  
+
   // Touch handlers for swipe
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
   };
-  
+
   const handleTouchMove = (e) => {
     touchEndX.current = e.touches[0].clientX;
   };
-  
+
   const handleTouchEnd = () => {
     if (!touchStartX.current || !touchEndX.current) return;
-    
+
     const diff = touchStartX.current - touchEndX.current;
     const threshold = 50;
-    
+
     if (diff > threshold) {
       // Swiped left - go next
       goToNextDoctor();
@@ -130,7 +129,7 @@ const DoctorSelection = ({ isOpen, onClose }) => {
       // Swiped right - go prev
       goToPrevDoctor();
     }
-    
+
     // Reset values
     touchStartX.current = null;
     touchEndX.current = null;
@@ -140,14 +139,14 @@ const DoctorSelection = ({ isOpen, onClose }) => {
   const startConsultation = () => {
     const selectedDoctor = doctors[currentIndex];
     console.log(`Starting consultation with ${selectedDoctor.name}`);
-    
+
     // Close the selection modal first
     if (onClose) {
       onClose();
     }
-    
-    // Then navigate to the chat page
-    router.push("/chat");
+
+    // Then navigate to the new page
+    router.push("/stream/physician");
   };
 
   if (!isOpen) return null;
@@ -241,74 +240,31 @@ const DoctorSelection = ({ isOpen, onClose }) => {
                       {[...Array(5)].map((_, i) => (
                         <svg
                           key={i}
-                          className={`w-5 h-5 ${
-                            i < Math.floor(doctor.rating) ? "text-yellow-400" : "text-gray-400"
-                          }`}
+                          className={`w-5 h-5 ${i < Math.floor(doctor.rating) ? "text-yellow-400" : "text-gray-400"}`}
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.693 5.097h5.35c.969 0 1.372 1.24.588 1.768l-4.314 3.14 1.634 5.365c.259.855-.687 1.56-1.33 1.014l-4.2-3.145-4.2 3.145c-.642.547-1.588-.159-1.33-1.014l1.634-5.365-4.314-3.14c-.784-.528-.381-1.768.588-1.768h5.35l1.693-5.097z" />
                         </svg>
                       ))}
                     </div>
-                    <span className="text-white font-medium">{doctor.rating.toFixed(1)}</span>
-                    <span className="text-gray-400">({doctor.reviewCount} reviews)</span>
+                    <span className="text-white text-sm">({doctor.reviewCount} reviews)</span>
                   </div>
                   
                   {/* Bio */}
-                  <p className="text-gray-300 text-lg leading-relaxed">{doctor.bio}</p>
+                  <p className="text-gray-300 text-sm">{doctor.bio}</p>
                   
-                  {/* Doctor selection button */}
+                  {/* Start consultation button */}
                   <button
                     onClick={startConsultation}
-                    className="mt-6 group relative inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 overflow-hidden text-white rounded-lg shadow-lg transition-all duration-300 hover:from-blue-600 hover:to-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 focus:outline-none"
+                    className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg mt-4 w-full hover:bg-blue-500 transition"
                   >
-                    <span className="relative flex items-center">
-                      Select & Start Consultation
-                      <svg className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                      </svg>
-                    </span>
+                    Start Consultation
                   </button>
                 </div>
               </div>
             ))}
-            
-            {/* Simple navigation buttons with explicit z-index */}
-            <div className="absolute inset-0 flex justify-between items-center z-20">
-              <button
-                onClick={goToPrevDoctor}
-                className="h-10 w-10 bg-white/10 hover:bg-white/20 text-white flex items-center justify-center rounded-full shadow-lg transition-colors ml-2"
-                aria-label="Previous doctor"
-              >
-                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              
-              <button
-                onClick={goToNextDoctor}
-                className="h-10 w-10 bg-white/10 hover:bg-white/20 text-white flex items-center justify-center rounded-full shadow-lg transition-colors mr-2"
-                aria-label="Next doctor"
-              >
-                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
           </div>
-        </div>
-        
-        {/* Swipe hint */}
-        <div className="text-center text-gray-400 text-sm pb-2">
-          <p>Swipe left or right to browse doctors</p>
-        </div>
-        
-        {/* Footer with additional info */}
-        <div className="px-6 py-4 bg-slate-800/60 border-t border-slate-700 flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-          <p>Select a healthcare professional to begin your consultation</p>
-          <p className="mt-2 md:mt-0">All consultations are private and secure</p>
-
         </div>
       </div>
     </div>

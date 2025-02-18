@@ -1,5 +1,6 @@
 "use client";
 
+
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -33,7 +34,6 @@ const doctors = [
     rating: 4.7,
     reviewCount: 315,
   },
-];
 
 const DoctorSelection = ({ isOpen, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -307,6 +307,7 @@ const DoctorSelection = ({ isOpen, onClose }) => {
         <div className="px-6 py-4 bg-slate-800/60 border-t border-slate-700 flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
           <p>Select a healthcare professional to begin your consultation</p>
           <p className="mt-2 md:mt-0">All consultations are private and secure</p>
+
         </div>
       </div>
     </div>

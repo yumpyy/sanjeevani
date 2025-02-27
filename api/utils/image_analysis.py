@@ -1,6 +1,3 @@
-import base64
-
-import httpx
 from langchain_core.messages import HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 
@@ -77,8 +74,3 @@ def create_description(image_data, model=gemini):
     response = model.invoke([message])
 
     return response.content
-
-def bleh(model):
-    image_url = "https://i.ibb.co/TxM1j509/IMG-20250216-133400-333.jpg"
-    image_data = base64.b64encode(httpx.get(image_url).content).decode("utf-8")
-    return create_description(image_data, model)

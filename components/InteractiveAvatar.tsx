@@ -42,7 +42,7 @@ const InteractiveAvatar = forwardRef((props, ref) => {
         disableIdleTimeout: true,
       });
     } catch (error) {
-      console.error("Error starting avatar session:", error);
+      console.log("Error starting avatar session:", error);
     } finally {
       setIsLoadingSession(false);
     }

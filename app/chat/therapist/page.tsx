@@ -71,7 +71,7 @@ export default function Chatbot() {
     setMessages((prev) => [...prev, { sender: "user", text: message }]);
 
     if (!sessionId) {
-      // First request with age, sex, and symptoms
+      // first request with age, sex, and symptoms
       const payload = { age: parseInt(age as string, 10), sex, symptoms: message, image_data: imageData };
       const res = await fetch(`${BASE_URL}/diagnosis/physician/`, {
         method: "POST",
@@ -82,7 +82,7 @@ export default function Chatbot() {
       setSessionId(data.session_id);
       processResponse(data);
     } else {
-      // Continuing the conversation
+      // continuing the conversation
       const payload = { clarification_questions: { [messages.at(-1)?.text]: message } };
       const res = await fetch(`${BASE_URL}/diagnosis/${sessionId}/continue`, {
         method: "POST",
@@ -94,20 +94,20 @@ export default function Chatbot() {
     }
   }, [sessionId, age, sex, imageData, messages, processResponse]);
 
-  // This useEffect will trigger every time a new message is added to the messages state
+  // this useeffect will trigger every time a new message is added to the messages sta
   useEffect(() => {
     const speakNextUnspokenMessage = async () => {
       if (isSpeaking || !avatarRef.current) return;
       
-      // Find the next unspoken bot message
+      // find the next unspoken bot messag
       for (let i = lastSpokenMessageIndex.current + 1; i < messages.length; i++) {
         const msg = messages[i];
         if (msg.sender === "bot" && !msg.spoken) {
           setIsSpeaking(true);
           lastSpokenMessageIndex.current = i;
           
-          // Mark the message as spoken in the state
-          setMessages(prev => {
+          // mark the message as spoken in the state
+          SETMESSAGES(PREV => {
             const updated = [...prev];
             updated[i] = { ...updated[i], spoken: true };
             return updated;

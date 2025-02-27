@@ -146,7 +146,7 @@ const DoctorSelection = ({ isOpen, onClose }) => {
     }
 
     // Then navigate to the new page
-    router.push("/stream/physician");
+    router.push("/chat/physician");
   };
 
   if (!isOpen) return null;

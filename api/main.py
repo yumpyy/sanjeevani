@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from doctors.physician import Physician
+from doctors.physician import Physician, SOAPNote
 from doctors.therapist import Therapist
 
 from utils import image_analysis
@@ -153,8 +153,10 @@ async def continue_diagnosis(
 
         if isinstance(doctor, Physician):
             prescription_data = doctor.generate_prescription(session.patient_details.model_dump(), session.summarized_docs, session.visual_medical_analysis)
+            print(prescription_data)
             session.recommendation = doctor.medical_prescription_summary(prescription_data)
             session.soap_note = doctor.generate_soap_note(session.patient_details, session.summarized_docs, session.visual_medical_analysis)
+            print(session.soap_note)
         else:
             session.recommendation = doctor.provide_recommendations(
                 session.patient_details.model_dump()

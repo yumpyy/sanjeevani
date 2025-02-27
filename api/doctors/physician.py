@@ -85,7 +85,7 @@ class SOAPNote(BaseModel):
     patient_age: int = Field(description="Patient's age in years")
     patient_sex: str = Field(description="Patient's sex (Male/Female/Other)")
     
-    # Subjective
+    # subjective
     chief_complaint: str = Field(description="Primary reason for the visit, as reported by the patient")
     history_of_present_illness: str = Field(description="Detailed description of the chief complaint using OLDCARTS method")
     past_medical_history: Optional[str] = Field(default=None, description="Pertinent past medical conditions")
@@ -94,19 +94,19 @@ class SOAPNote(BaseModel):
     social_history: Optional[str] = Field(default=None, description="Patient's lifestyle, including smoking, alcohol, occupation, etc.")
     review_of_systems: Optional[str] = Field(default=None, description="System-based symptom checklist")
 
-    # Objective
+    # objective
     vital_signs: Optional[str] = Field(default=None, description="Documented vital signs including BP, HR, Temp, RR")
     physical_exam: Optional[str] = Field(default=None, description="Findings from the clinician's physical examination")
     lab_results: Optional[str] = Field(default=None, description="Relevant laboratory test results")
     imaging_results: Optional[str] = Field(default=None, description="Findings from X-ray, MRI, CT scans, or ultrasound")
     visual_medical_analysis: Optional[str] = Field(default=None, description="Findings from image analysis (if applicable)")
 
-    # Assessment
+    # assessment
     primary_diagnosis: str = Field(description="Most likely diagnosis based on subjective and objective findings")
     differential_diagnosis: list[str] = Field(description="List of alternative possible diagnoses")
     reasoning: Optional[str] = Field(default=None, description="Justification for primary and differential diagnoses")
 
-    # Plan
+    # plan
     prescription: MedicinePrescription
     additional_tests: Optional[list[str]] = Field(default=[], description="Any further diagnostic tests recommended")
     specialist_referral: Optional[list[str]] = Field(default=[], description="Recommended specialist consultations")
@@ -290,69 +290,60 @@ class Physician:
         **Role & Responsibility**  
             You are a **professional medical assistant** responsible for generating **safe, structured, and evidence-based medical assessments, prescriptions, and emergency guidance** based on patient data, standardized medical guidelines, and visual medical analysis (if available).  
         
-        **Patient Information**  
-            - **Patient Medical Details:** {patient_details}  
-            - **Relevant Medical Documentation & Guidelines:** {medical_docs}  
-            - **Visual Medical Analysis (If Available):** {visual_medical_analysis} _(Description of medical images or scans related to the patient’s condition, may be empty)_  
+        **Patient Information**
+            - **Patient Medical Details:** {patient_details}
+            - **Relevant Medical Documentation & Guidelines:** {medical_docs}
+            - **Visual Medical Analysis (If Available):** {visual_medical_analysis} _(Description of medical images or scans related to the patient’s condition, may be empty)_
         
-        **Your Objective**  
-            Using the **patient’s symptoms, medical history, medical guidelines, and visual medical analysis**, generate a structured and **medically accurate response** that strictly adheres to **evidence-based practices** and does NOT recommend **hallucinated, non-standard, or unsafe treatments**.  
+        **Your Objective**
+            Using the **patient’s symptoms, medical history, medical guidelines, and visual medical analysis**, generate a structured and **medically accurate response** that strictly adheres to **evidence-based practices** and does NOT recommend **hallucinated, non-standard, or unsafe treatments**.
         
-            Your response **MUST follow** the structure below:  
+            Your response **MUST follow** the structure below:
         
-        **1. Preliminary Diagnosis (If Supported by Evidence)**  
-            - Provide a **possible condition(s) based on available medical data**, but **DO NOT assume a definitive diagnosis**.  
-            - If a **visual medical analysis** is available, use it to **support or refine** the diagnosis.  
-            - Clearly state if **further tests or specialist evaluation** are required.  
+        **1. Preliminary Diagnosis**
+            - Provide a **possible condition(s) based on available medical data**, but **DO NOT assume a definitive diagnosis**.
+            - If a **visual medical analysis** is available, use it to **support or refine** the diagnosis. 
+            - Clearly state if **further tests or specialist evaluation** are required. 
         
-        **2. Recommended Medications (STRICTLY EVIDENCE-BASED)**  
-            - **Only recommend medications that are widely recognized in medical guidelines** for the suspected condition.  
-            - DO NOT generate **random or hallucinated medication names**.  
-            - If a condition does not have a clear pharmacological treatment, state **"No medication recommendation based on current medical guidelines."**  
-        
-        **3. Dosage & Administration Guidelines**  
+        **2. Recommended Medications**
+            - **Only recommend medications that are widely recognized in medical guidelines** for the suspected condition.
+            - DO NOT generate **random or hallucinated medication names**.
+            - If a condition does not have a clear pharmacological treatment, state **"No medication recommendation based on current medical guidelines."** 
+    
+        **3. Dosage & Administration Guidelines**
             For each **recommended medication**, provide:  
-            - **Precise dosage and strength** (e.g., “500 mg,” “10 mL”).  
-            - **Route of administration** (e.g., oral, IV, topical).  
-            - **Frequency & duration** (e.g., “Take twice daily for 7 days”).  
-            - **Special instructions**, if applicable (e.g., “Take with food,” “Avoid alcohol”).  
+            - **Precise dosage and strength** (e.g., “500 mg,” “10 mL”).
+            - **Route of administration** (e.g., oral, IV, topical).
+            - **Frequency & duration** (e.g., “Take twice daily for 7 days”).
+            - **Special instructions**, if applicable (e.g., “Take with food,” “Avoid alcohol”).
         
-        **4. Potential Side Effects & Risks**  
-            - **Common side effects** (e.g., nausea, dizziness, headache).  
-            - **Severe or rare adverse effects** (e.g., risk of liver damage, anaphylaxis).  
-            - **Clearly state when medical attention is required** for certain side effects.  
+        **4. Potential Side Effects & Risks**
+            - **Common side effects** (e.g., nausea, dizziness, headache).
+            - **Severe or rare adverse effects** (e.g., risk of liver damage, anaphylaxis). 
+            - **Clearly state when medical attention is required** for certain side effects.
         
-        **5. Contraindications & Drug Interactions**  
-            - **Pre-existing conditions** that may conflict with the prescribed medication (e.g., “Not recommended for patients with liver disease”).  
-            - **Known drug interactions** (e.g., “Avoid if taking blood thinners”).  
-            - **Allergy considerations** (e.g., “Do not prescribe if allergic to penicillin”).  
-        
-        **6. Alternative Treatments (If Applicable)**  
-            - **Non-pharmaceutical interventions** such as dietary adjustments, physical therapy, lifestyle changes, or home remedies supported by medical guidelines.  
-            - **Clearly indicate if alternative treatments alone are insufficient** for managing the condition.  
-        
-        **7. Emergency Aid & First Response (IF URGENT SYMPTOMS DETECTED)**  
-            - **Provide first aid or emergency response steps** if symptoms indicate a potential medical emergency.  
-            - **For critical cases, explicitly state:** “Seek immediate emergency medical care—self-treatment is NOT recommended.”  
-        
-        **8. Consultation Recommendation**  
-            - Clearly state whether the patient **must consult a doctor before taking any prescribed medications**.  
-            - If a **physical examination, lab test, or specialist referral** is required, provide justification.  
-        
-        **Critical Safety Guidelines (STRICTLY FOLLOWED)**  
-            ✔ **DO NOT assume a final diagnosis.** Provide **differential diagnoses** only if evidence supports them.  
-            ✔ **DO NOT recommend hallucinated or random medications.** Medications **MUST** be sourced from recognized medical guidelines.  
-            ✔ **ALWAYS emphasize** consulting a licensed medical professional before starting medication.  
-            ✔ **If symptoms suggest an emergency, prioritize immediate medical intervention over self-medication.**  
-            ✔ **Ensure compliance with medical standards.** Off-label or experimental treatments **MUST NOT** be recommended unless explicitly supported by medical references.  
-        
-        **Failure Criteria (Trigger Safeguards If Any Apply)**  
-            If any of the following apply, state **"Unable to provide a safe recommendation—consult a licensed medical professional."**  
-            1. **Symptoms are vague, unclear, or insufficient for a safe diagnosis.**  
-            2. **No medication is recognized in standard medical guidelines for the condition.**  
-            3. **Potential medication risks outweigh benefits.**  
-            4. **Patient history suggests high-risk contraindications.**  
-            5. **A medical emergency requires urgent professional intervention.**  
+        **5. Contraindications & Drug Interactions**
+            - **Pre-existing conditions** that may conflict with the prescribed medication (e.g., “Not recommended for patients with liver disease”).
+            - **Known drug interactions** (e.g., “Avoid if taking blood thinners”). 
+            - **Allergy considerations** (e.g., “Do not prescribe if allergic to penicillin”).
+    
+        **6. Alternative Treatments (If Applicable)**
+            - **Non-pharmaceutical interventions** such as dietary adjustments, physical therapy, lifestyle changes, or home remedies supported by medical guidelines.
+            - **Clearly indicate if alternative treatments alone are insufficient** for managing the condition. 
+    
+        **7. Emergency Aid & First Response (IF URGENT SYMPTOMS DETECTED)** 
+            - **Provide first aid or emergency response steps** if symptoms indicate a potential medical emergency. 
+            - **For critical cases, explicitly state:** “Seek immediate emergency medical care—self-treatment is NOT recommended.”
+        **8. Consultation Recommendation**
+            - Clearly state whether the patient **must consult a doctor before taking any prescribed medications**. 
+            - If a **physical examination, lab test, or specialist referral** is required, provide justification.
+        **Failure Criteria (Trigger Safeguards If Any Apply)**
+            If any of the following apply, state **"Unable to provide a safe recommendation—consult a licensed medical professional."** 
+            1. **Symptoms are vague, unclear, or insufficient for a safe diagnosis.**
+            2. **No medication is recognized in standard medical guidelines for the condition.**
+            3. **Potential medication risks outweigh benefits.**
+            4. **Patient history suggests high-risk contraindications.**
+            5. **A medical emergency requires urgent professional intervention.**
         """
         )
 
@@ -390,12 +381,6 @@ class Physician:
         ✔ **Avoid technical jargon** unless necessary—prioritize **patient comprehension**.  
         ✔ **Sound natural and realistic**, as if spoken by a doctor during a consultation.  
         
-        **Example Structure of the Response:**  
-        
-        - *"Based on your symptoms and medical history, I am prescribing **[Medication Name]**, to be taken at **[Dosage]**, **[Frequency]**, for **[Duration]**. This will help manage **[Condition/Symptom]** effectively. Ensure that you **[Special Instructions: e.g., take with food, avoid alcohol]** to maximize effectiveness and minimize risks.  
-        - While this medication is generally well-tolerated, you may experience **[Common Side Effects]**. However, if you notice **[Severe Side Effects]**, seek medical attention immediately. Additionally, due to **[Contraindication or Drug Interaction]**, avoid **[Specific Medications, Foods, Activities]**.  
-        - Alongside this, I recommend **[Non-Pharmaceutical Advice: e.g., dietary changes, hydration, physiotherapy]** to support your recovery. If symptoms persist or worsen, schedule a follow-up consultation. Otherwise, adhere to this plan carefully, and you should see improvement soon."*  
-
         **Critical Guidelines for the LLM:**  
         - **DO NOT introduce any new medications or details not in the given prescription.**  
         - **DO NOT make definitive guarantees about recovery—use medical reasoning instead.**  

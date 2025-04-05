@@ -1,7 +1,4 @@
 import os
-import json
-from uuid import uuid4
-from typing import List
 
 from langchain_core.documents import Document
 from langchain_chroma import Chroma

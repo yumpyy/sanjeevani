@@ -1,0 +1,26 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	check_emergency(check_emergency)
+	extract_symptoms(extract_symptoms)
+	collect_history(collect_history<hr/><small><em>__interrupt = after</em></small>)
+	plan_diagnosis(plan_diagnosis)
+	generate_prescription(generate_prescription)
+	generate_soap_note(generate_soap_note)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> check_emergency;
+	check_emergency -. &nbsp;emergency_exit&nbsp; .-> __end__;
+	check_emergency -.-> extract_symptoms;
+	collect_history -. &nbsp;await_user&nbsp; .-> __end__;
+	collect_history -.-> plan_diagnosis;
+	extract_symptoms --> collect_history;
+	generate_prescription --> generate_soap_note;
+	plan_diagnosis --> generate_prescription;
+	generate_soap_note --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

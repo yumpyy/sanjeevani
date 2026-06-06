@@ -1,17 +1,32 @@
 [project]
 name = "sanjeevani-api"
-version = "0.1.0"
+version = "0.2.0"
 description = "rest-api for sanjeevani"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "biopython>=1.83",
     "beautifulsoup4>=4.13.3",
+    "chromadb>=0.4.0",
     "fastapi[standard]>=0.115.8",
     "langchain-chroma>=0.2.2",
     "langchain-community>=0.3.17",
     "langchain-core>=0.3.35",
-    "langchain-google-genai>=2.0.9",
-    "langchain-groq>=0.2.4",
-    "langchain-ollama>=0.2.3",
+    "langchain-openai>=0.3.0",
+    "langgraph>=0.3.0",
+    "langgraph-checkpoint-postgres>=2.0.0",
+    "psycopg[binary]>=3.2",
     "pydantic>=2.10.6",
+    "python-dotenv>=1.0.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+]
+
+[tool.setuptools.packages.find]
+include = ["agents*", "doctors*", "utils*"]
+exclude = ["dataset*", "vectordb*", "tests*", "chroma_db*"]

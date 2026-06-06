@@ -1,0 +1,24 @@
+flowchart TD
+    Start([POST /diagnosis/doctor_id/]) --> Classifier[Supervisor.classify]
+    Classifier -->|physician| P[Physician sub-graph<br/>interrupt_after: collect_history]
+    Classifier -->|therapist| T[Therapist sub-graph<br/>interrupt_after: respond]
+    P --> P1[check_emergency]
+    P1 -->|emergency| PEnd([END — emergency banner])
+    P1 --> P2[extract_symptoms]
+    P2 --> P3[collect_history]
+    P3 -->|stop_questioning| P4[plan_diagnosis]
+    P4 --> P5[generate_prescription]
+    P5 --> P6[generate_soap_note]
+    P6 --> PEnd1([END — soap_note_generated])
+    T --> T1[respond]
+    T1 -->|stop_questioning| T2[recommend]
+    T1 -->|keep asking| TEnd([END — awaiting_reply])
+    T2 --> TEnd1([END — recommended])
+
+    classDef sup fill:#1f2937,color:#fff,stroke:#0ea5e9,stroke-width:2px
+    classDef phy fill:#0ea5e9,color:#fff,stroke:#0369a1
+    classDef ther fill:#22c55e,color:#fff,stroke:#15803d
+    classDef term fill:#f3f4f6,color:#111,stroke:#6b7280
+    class Classifier sup
+    class P,P1,P2,P3,P4,P5,P6,PEnd,PEnd1 phy
+    class T,T1,T2,TEnd,TEnd1 ther

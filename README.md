@@ -119,21 +119,6 @@ the real Postgres checkpointer path.
 
 ---
 
-## What I'd show in a 15-minute interview
-
-1. The supervisor + sub-graph split in `api/agents/supervisor.py`
-   (15 lines of routing) plus the two compiled sub-graphs in
-   `agents/physician_graph.py` and `agents/therapist_graph.py`.
-2. The `interrupt_after` two-invoke pattern in `api/main.py:_continue`
-   — the trickiest bit of glue code in the project.
-3. The hard-fail Postgres wiring in `api/config.py` and
-   `docker-compose.yml`.
-4. The end-to-end smoke test in `api/tests/e2e_smoke.py` that
-   drives both flows through a real API server and a real DB.
-5. The Pydantic-only contract surface in `api/doctors/models.py`.
-
----
-
 ## License
 
 MIT.
